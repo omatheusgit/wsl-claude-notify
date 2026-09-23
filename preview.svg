@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="330" viewBox="0 0 720 330" font-family="Segoe UI, system-ui, -apple-system, sans-serif">
+  <defs>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#000" flood-opacity="0.45"/>
+    </filter>
+    <linearGradient id="wall" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1e3a5f"/>
+      <stop offset="100%" stop-color="#0f1c2e"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="720" height="330" fill="url(#wall)"/>
+
+  <!-- janela do terminal ao fundo -->
+  <rect x="24" y="30" width="400" height="270" rx="8" fill="#0c0c0c" opacity="0.9"/>
+  <rect x="24" y="30" width="400" height="30" rx="8" fill="#1f1f1f"/>
+  <rect x="24" y="52" width="400" height="8" fill="#1f1f1f"/>
+  <circle cx="42" cy="45" r="4" fill="#ff5f57"/>
+  <circle cx="58" cy="45" r="4" fill="#febc2e"/>
+  <circle cx="74" cy="45" r="4" fill="#28c840"/>
+  <text x="96" y="49" fill="#8b949e" font-size="11">Ubuntu — Claude Code</text>
+
+  <text x="44" y="88"  fill="#7ee787" font-size="11.5" font-family="Cascadia Code, Consolas, monospace">~/projeto$ claude</text>
+  <text x="44" y="112" fill="#c9d1d9" font-size="11.5" font-family="Cascadia Code, Consolas, monospace">● Analisando o deploy…</text>
+  <text x="44" y="136" fill="#c9d1d9" font-size="11.5" font-family="Cascadia Code, Consolas, monospace">● Lendo values.yaml</text>
+  <rect x="40" y="152" width="368" height="62" rx="5" fill="#161b22" stroke="#d29922" stroke-width="1.5"/>
+  <text x="54" y="174" fill="#d29922" font-size="11.5" font-family="Cascadia Code, Consolas, monospace">Permitir  kubectl apply -f deploy.yaml ?</text>
+  <text x="54" y="196" fill="#8b949e" font-size="11.5" font-family="Cascadia Code, Consolas, monospace">❯ 1. Sim    2. Não</text>
+  <text x="44" y="238" fill="#484f58" font-size="11.5" font-family="Cascadia Code, Consolas, monospace">▌</text>
+
+  <!-- toast do Windows -->
+  <g filter="url(#shadow)">
+    <rect x="392" y="74" width="304" height="182" rx="8" fill="#2c2c2c"/>
+    <rect x="392" y="74" width="304" height="182" rx="8" fill="none" stroke="#3d3d3d"/>
+
+    <text x="414" y="99" fill="#a0a0a0" font-size="11">Windows PowerShell</text>
+    <text x="676" y="99" fill="#a0a0a0" font-size="11" text-anchor="end">agora</text>
+
+    <rect x="414" y="114" width="26" height="26" rx="5" fill="#cc785c"/>
+    <text x="427" y="132" fill="#fff" font-size="13" font-weight="600" text-anchor="middle">C</text>
+
+    <text x="452" y="126" fill="#ffffff" font-size="13" font-weight="600">Claude Code — projeto</text>
+    <text x="452" y="146" fill="#d4d4d4" font-size="12">Aguardando sua aprovação</text>
+
+    <rect x="414" y="168" width="128" height="32" rx="4" fill="#3b3b3b" stroke="#4d4d4d"/>
+    <text x="478" y="189" fill="#ffffff" font-size="12" text-anchor="middle">Ir para o terminal</text>
+
+    <rect x="552" y="168" width="124" height="32" rx="4" fill="#3b3b3b" stroke="#4d4d4d"/>
+    <text x="614" y="189" fill="#ffffff" font-size="12" text-anchor="middle">Dispensar</text>
+
+    <text x="414" y="228" fill="#7a7a7a" font-size="10.5">Fica na tela até você resolver</text>
+  </g>
+
+  <!-- rodape -->
+  <text x="24" y="318" fill="#8ba3c7" font-size="11.5">
+    O agente para  →  o toast aparece e fica  →  o botão devolve o foco  →  a notificação some sozinha
+  </text>
+</svg>
