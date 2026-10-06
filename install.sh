@@ -90,7 +90,10 @@ mv "$tmp" "$SETTINGS"
 ok "settings.json atualizado (backup ao lado)"
 
 # ---------------------------------------------------------- protocolo Windows
-WIN_PS1=$(wslpath -w "$REPO/windows-setup.ps1")
+# O PowerShell elevado pode nao enxergar \\wsl.localhost; roda de uma copia no %TEMP%.
+WIN_TEMP=$("$PS" -NoProfile -Command '[IO.Path]::GetTempPath()' | tr -d '\r')
+WIN_PS1="${WIN_TEMP%\\}\\claudefocus-setup.ps1"
+cp "$REPO/windows-setup.ps1" "$(wslpath -u "$WIN_PS1")" || die "nao consegui copiar o windows-setup.ps1 para $WIN_PS1"
 ARGS="-ExecutionPolicy Bypass -File \`\"$WIN_PS1\`\""
 [ -n "$HOTKEY" ] && ARGS="$ARGS -Hotkey \`\"$HOTKEY\`\"" || ARGS="$ARGS -ProcessName \`\"$PROCESS\`\""
 
@@ -106,9 +109,25 @@ case "${r:-s}" in
     exit 0 ;;
 esac
 
+INICIO=$(date +%s)
 "$PS" -NoProfile -Command "Start-Process powershell -Verb RunAs -Wait -ArgumentList '$ARGS'" \
   || die "a elevacao falhou ou foi negada."
+
+# Start-Process -Wait nao repassa o exit code do processo elevado: confere se o
+# handler existe e se o script que ele chama acabou de ser escrito.
+HANDLER=$(/mnt/c/Windows/System32/reg.exe query 'HKLM\Software\Classes\claudefocus\shell\open\command' /ve 2>/dev/null \
+  | tr -d '\r' | sed -n 's/.*REG_SZ *//p')
+SCRIPT_WIN=$(printf '%s' "$HANDLER" | sed -n 's/.*" "\(.*\)"$/\1/p')
+SCRIPT=$([ -n "$SCRIPT_WIN" ] && wslpath -u "$SCRIPT_WIN" 2>/dev/null)
+if [ -z "$SCRIPT" ] || [ ! -f "$SCRIPT" ] || [ "$(stat -c %Y "$SCRIPT")" -lt "$INICIO" ]; then
+  die "o protocolo nao foi registrado. Rode num PowerShell como administrador:
+  powershell -ExecutionPolicy Bypass -File \"$WIN_PS1\"${HOTKEY:+ -Hotkey \"$HOTKEY\"}"
+fi
 ok "protocolo claudefocus: registrado"
+echo "      handler: $HANDLER"
+case "$HANDLER" in
+  *wscript.exe*) echo "      (wscript: se o botao do toast nao fizer nada, instale o AutoHotkey v2 e rode de novo)" ;;
+esac
 
 # ----------------------------------------------------------------- verificar
 echo

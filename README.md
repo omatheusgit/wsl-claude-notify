@@ -22,6 +22,11 @@ rodando "o Claude precisa de permissão" sozinho não ajuda.
 ## Como usar
 
 Precisa de `jq` no WSL e de uma senha de administrador **uma vez** (explicado abaixo).
+O [AutoHotkey v2](https://www.autohotkey.com/) é recomendado: em alguns Windows o
+botão do toast só funciona com ele (ver [detalhes](#detalhes-que-custaram-caro)).
+
+Rode num terminal seu, no WSL — não peça para um agente rodar de dentro de um app
+desktop (ver [detalhes](#detalhes-que-custaram-caro)).
 
 ```bash
 git clone https://github.com/omatheusgit/wsl-claude-notify.git
@@ -53,14 +58,15 @@ que transforma os **botões extras de um Redragon Storm Pro** em ícones de task
 
 É independente da notificação, mas combina: se você instalar os dois, aponte o
 botão do toast para o atalho `Ctrl+Alt+F8`, que o script expõe justamente para
-isso (sempre foca, nunca minimiza):
-
-```bash
-./install.sh --hotkey Ctrl+Alt+F8
-```
+isso (sempre foca, nunca minimiza). Instale o mouse **primeiro** — ele instala o
+AutoHotkey, que o `install.sh` passa a usar como handler do botão:
 
 ```powershell
 cd mouse; .\install-mouse.ps1
+```
+
+```bash
+./install.sh --hotkey Ctrl+Alt+F8
 ```
 
 ## O que o install faz
@@ -69,8 +75,13 @@ cd mouse; .\install-mouse.ps1
 |---|---|
 | Copia 4 hooks | `~/.claude/hooks/` |
 | Registra os hooks (sem apagar o que já existe, com backup) | `~/.claude/settings.json` |
-| Escreve o script que devolve o foco | `%LOCALAPPDATA%\claudefocus.vbs` |
+| Escreve o script que devolve o foco | `%LOCALAPPDATA%\claudefocus.ahk` (ou `.vbs` sem AutoHotkey) |
 | Registra o protocolo `claudefocus:` — **pede UAC** | `HKLM\Software\Classes` |
+| Confere no registro se a elevação gravou mesmo | — |
+
+O handler é o `AutoHotkey64.exe` quando o AutoHotkey v2 está instalado, e o
+`wscript.exe` quando não está. Para forçar um deles, rode o `windows-setup.ps1`
+como administrador com `-Handler ahk` ou `-Handler wscript`.
 
 Os hooks:
 
@@ -83,7 +94,7 @@ Os hooks:
 
 ## Detalhes que custaram caro
 
-Se você for adaptar isso, estes quatro pontos são onde eu perdi tempo:
+Se você for adaptar isso, estes são os pontos onde eu perdi tempo:
 
 **O toast não lê o `HKCU`.** Um protocolo registrado em
 `HKCU\Software\Classes` funciona com `Start-Process` e falha no clique do toast,
@@ -98,9 +109,57 @@ ativação do toast não. `cmd.exe /c start wt.exe` também não salva.
 mesmo com `-WindowStyle Hidden`. O `wscript.exe` roda o VBScript sem janela
 nenhuma e é um binário real em `System32`.
 
+**Mas alguns Windows recusam handler em `System32`.** Em certos builds do
+Windows 11, o clique no toast simplesmente não abre um protocolo cujo handler
+mora em `C:\Windows\System32` — `wscript.exe`, `cmd.exe`, até `notepad.exe`. O
+toast some e nada acontece: sem diálogo, sem log. O mesmo protocolo funciona com
+`Start-Process`, e protocolos de apps instalados (`vscode:`, por exemplo)
+funcionam no toast. O `AutoHotkey64.exe` fica fora de `System32` e passa, roda
+sem janela e já é dependência do script do mouse — por isso virou o handler
+preferido.
+
 **O VBScript quebra com BOM.** `Set-Content -Encoding UTF8` do PowerShell escreve
 BOM e o VBScript morre com "caractere inválido" na linha 1. Tem que ser
-`[System.IO.File]::WriteAllText` com `UTF8Encoding $false`.
+`[System.IO.File]::WriteAllText` com `UTF8Encoding $false`. O `.ahk` é escrito
+do mesmo jeito.
+
+**A elevação a partir do WSL falha calada.** `Start-Process -Verb RunAs -Wait` não
+repassa o exit code do processo elevado, e o PowerShell elevado pode não enxergar
+o caminho `\\wsl.localhost\...` do script. O install copia o `.ps1` para o `%TEMP%`
+do Windows antes de elevar e, no fim, confere no registro se o handler foi gravado.
+
+**Não instale de dentro de um app empacotado.** Apps desktop distribuídos como
+MSIX rodam num contêiner que redireciona as escritas em `%LOCALAPPDATA%`,
+`%APPDATA%` e `HKCU` para uma pasta privada do pacote — e os processos que eles
+abrem herdam isso, inclusive via `wsl.exe`. Se um agente rodar a instalação de
+dentro de um desses apps, o script de foco vai parar em
+`%LOCALAPPDATA%\Packages\<pacote>\LocalCache\...`, invisível para o toast, e o
+clique dá "Não é possível encontrar o arquivo de script". Rode o install num
+terminal comum.
+
+## Diagnóstico
+
+O botão do toast é uma corrente: toast → protocolo `claudefocus:` → script →
+foco no terminal. Para achar o elo quebrado, rode no WSL e troque de janela
+durante o `sleep`:
+
+```bash
+# o handler registrado
+H=$(reg.exe query 'HKLM\Software\Classes\claudefocus\shell\open\command' /ve | tr -d '\r' | sed -n 's/.*REG_SZ *//p'); echo "$H"
+
+# o script sozinho, sem protocolo nem toast
+sleep 4; powershell.exe -NoProfile -Command "& $H"
+
+# o protocolo, sem o toast
+sleep 4; powershell.exe -NoProfile -Command 'Start-Process claudefocus:'
+```
+
+| Sintoma | Causa provável |
+|---|---|
+| Script sozinho não foca | Handler/atalho errado, ou janela em foco roda como admin |
+| Protocolo funciona, clique no toast não | Handler em `System32` recusado — instale o AutoHotkey |
+| Clique dá "Não é possível encontrar o arquivo de script" | Script gravado num contêiner MSIX — reinstale num terminal comum |
+| Clique dá "Obter um aplicativo" | Protocolo em `HKCU` em vez de `HKLM` |
 
 ## Ajustes
 
