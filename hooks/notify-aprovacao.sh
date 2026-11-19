@@ -15,9 +15,14 @@ dir=$(printf '%s' "$payload" | jq -r '.cwd // empty' 2>/dev/null)
 [ -n "$dir" ] || dir="$PWD"
 proj=$(basename "$dir")
 
-# Panes gerenciados pelo herdr recebem esse contexto injetado.
+# Terminais do herdr (app desktop ou TUI) recebem esse contexto injetado.
 onde="$proj"
-if [ -n "${HERDR_PANE_ID:-}" ]; then
+if [ -n "${HC_TERMINAL_ID:-}" ]; then
+  where=""
+  command -v hc >/dev/null 2>&1 \
+    && where=$(hc get "$HC_TERMINAL_ID" 2>/dev/null | jq -r '.labels.where // .name // empty' 2>/dev/null)
+  [ -n "$where" ] && onde="$where" || onde="$proj · $HC_TERMINAL_ID"
+elif [ -n "${HERDR_PANE_ID:-}" ]; then
   ws=""
   if command -v herdr >/dev/null 2>&1 && [ -n "${HERDR_WORKSPACE_ID:-}" ]; then
     ws=$(herdr workspace get "$HERDR_WORKSPACE_ID" 2>/dev/null \

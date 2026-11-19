@@ -2,9 +2,9 @@
 # Instala os hooks no WSL e registra o protocolo claudefocus: no Windows.
 #
 #   ./install.sh                      # foca a janela do Windows Terminal
+#   ./install.sh --process herdr-app  # foca outro terminal (ex. herdr desktop)
 #   ./install.sh --hotkey Ctrl+Alt+F9 # dispara seu atalho (ex. botao do mouse)
 #   ./install.sh --uninstall
-#
 # Idempotente: rodar de novo nao duplica hook no settings.json.
 set -euo pipefail
 
@@ -21,7 +21,7 @@ while [ $# -gt 0 ]; do
     --hotkey)    HOTKEY="${2:?--hotkey precisa de um valor, ex. Ctrl+Alt+F9}"; shift 2 ;;
     --process)   PROCESS="${2:?--process precisa de um valor}"; shift 2 ;;
     --uninstall) UNINSTALL=1; shift ;;
-    -h|--help)   sed -n '2,9p' "$0" | sed 's/^# \?//'; exit 0 ;;
+    -h|--help)   sed -n '2,8p' "$0" | sed 's/^# \?//'; exit 0 ;;
     *)           echo "opcao desconhecida: $1" >&2; exit 1 ;;
   esac
 done
@@ -38,7 +38,7 @@ PS=/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe
 
 # ---------------------------------------------------------------- desinstalar
 if [ "$UNINSTALL" = 1 ]; then
-  rm -f "$HOOKS_DIR"/notify-{common,windows,clear,aprovacao}.sh
+  rm -f "$HOOKS_DIR"/notify-{common,windows,clear,aprovacao}.sh "$HOOKS_DIR/notify.conf"
   ok "hooks removidos"
 
   if [ -f "$SETTINGS" ]; then
@@ -63,7 +63,8 @@ mkdir -p "$HOOKS_DIR"
 for f in notify-common.sh notify-windows.sh notify-clear.sh notify-aprovacao.sh; do
   install -m 755 "$REPO/hooks/$f" "$HOOKS_DIR/$f"
 done
-ok "hooks em $HOOKS_DIR"
+printf "TOAST_FOCUS_PROCESS='%s'\n" "$PROCESS" > "$HOOKS_DIR/notify.conf"
+ok "hooks em $HOOKS_DIR (toast some quando $PROCESS ganha foco)"
 
 # ------------------------------------------------------------- settings.json
 [ -f "$SETTINGS" ] || echo '{}' > "$SETTINGS"
