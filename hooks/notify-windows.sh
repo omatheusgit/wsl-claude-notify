@@ -8,8 +8,8 @@
 # Windows.UI.Notifications.
 #
 # O toast leva tag/group fixos para que notify-clear.sh consiga remove-lo
-# depois. Um watcher em background remove sozinho quando o Windows Terminal
-# volta ao foco.
+# depois. Um watcher em background remove sozinho quando o terminal
+# ($TOAST_FOCUS_PROCESS, padrao Windows Terminal) volta ao foco.
 set -uo pipefail
 
 TITULO="${1:-Claude Code}"
@@ -59,7 +59,7 @@ M=$(esc "$MENSAGEM")
 
 touch "$TOAST_MARKER"
 
-# Watcher: remove o toast quando o Windows Terminal ganhar foco. Desacoplado do
+# Watcher: remove o toast quando o terminal ganhar foco. Desacoplado do
 # processo do hook (setsid) para sobreviver ao timeout do hook.
 setsid bash -c '
 "$1" -NoProfile -NonInteractive -Command "$2" >/dev/null 2>&1
@@ -76,7 +76,7 @@ while ((Get-Date) -lt \$deadline) {
   \$owner = 0
   [void][ClaudeW.Fg]::GetWindowThreadProcessId(\$h, [ref]\$owner)
   \$p = Get-Process -Id \$owner -ErrorAction SilentlyContinue
-  if (\$p -and \$p.ProcessName -eq 'WindowsTerminal') {
+  if (\$p -and \$p.ProcessName -eq '$TOAST_FOCUS_PROCESS') {
     [Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType=WindowsRuntime] > \$null
     [Windows.UI.Notifications.ToastNotificationManager]::History.Remove('$TOAST_TAG','$TOAST_GROUP','$TOAST_APPID')
     break

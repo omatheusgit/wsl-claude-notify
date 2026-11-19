@@ -46,9 +46,22 @@ nada. Outras opções:
 
 ```bash
 ./install.sh --process WezTerm       # focar outro terminal
+./install.sh --process herdr-app     # focar o herdr desktop
 ./install.sh --hotkey Ctrl+Alt+F8    # disparar um atalho seu
 ./install.sh --uninstall             # remover tudo
 ```
+
+O `--process` também diz ao watcher qual janela, ao ganhar foco, limpa o toast.
+Dá para combinar: `--hotkey Ctrl+Alt+F8 --process herdr-app` usa o atalho no
+botão e limpa o toast quando o herdr ganha foco.
+
+### herdr desktop
+
+Com o [herdr](https://herdr.dev) desktop no Windows rodando o Claude Code em
+terminais do WSL, use `--process herdr-app`. O título do toast passa a mostrar
+o nome do terminal no herdr (`Workspace / aba`), lido com `hc get` a partir do
+`HC_TERMINAL_ID` que o herdr injeta. O `hc` não tem comando para selecionar um
+terminal, então o botão traz a janela do herdr, não o terminal exato.
 
 ## Bônus: os botões do mouse
 
@@ -73,7 +86,7 @@ cd mouse; .\install-mouse.ps1
 
 | Passo | Onde |
 |---|---|
-| Copia 4 hooks | `~/.claude/hooks/` |
+| Copia 4 hooks e grava o `--process` em `notify.conf` | `~/.claude/hooks/` |
 | Registra os hooks (sem apagar o que já existe, com backup) | `~/.claude/settings.json` |
 | Escreve o script que devolve o foco | `%LOCALAPPDATA%\claudefocus.ahk` (ou `.vbs` sem AutoHotkey) |
 | Registra o protocolo `claudefocus:` — **pede UAC** | `HKLM\Software\Classes` |
@@ -89,7 +102,7 @@ Os hooks:
   o modelo está pedindo permissão.
 - **`PostToolUse`** e **`UserPromptSubmit`** → limpam o toast quando você aprova
   ou digita algo novo.
-- Um **watcher** em segundo plano limpa quando o Windows Terminal ganha foco,
+- Um **watcher** em segundo plano limpa quando o terminal (`--process`) ganha foco,
   para o caso de você voltar por atalho sem clicar na notificação.
 
 ## Detalhes que custaram caro
